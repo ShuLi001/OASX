@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oasx/modules/home/controllers/dashboard_controller.dart';
 import 'package:oasx/modules/home/models/home_workbench_layout.dart';
-import 'package:oasx/modules/home/models/asset_snapshot_model.dart';
 import 'package:oasx/modules/home/widgets/log_center_panel.dart';
 import 'package:oasx/modules/home/widgets/statistics_panel.dart';
+import 'package:oasx/modules/home/widgets/asset_snapshot_panel.dart';
 import 'package:oasx/translation/i18n_content.dart';
 
 /// Hosts the desktop right sidebar for logs, stats, assets and the guide.
@@ -59,7 +59,10 @@ class WorkbenchSidebarPanel extends StatelessWidget {
                   HomeWorkbenchTab.logs => LogCenterPanel(
                     scriptName: scriptName,
                   ),
-                  HomeWorkbenchTab.assets => const _AssetSnapshotPanel(),
+                  HomeWorkbenchTab.assets => AssetSnapshotPanel(
+                    compact: true,
+                    scriptName: scriptName,
+                  ),
                   HomeWorkbenchTab.guide => const _GuidePanel(),
                   _ => const SizedBox.shrink(),
                 },
@@ -80,85 +83,6 @@ class WorkbenchSidebarPanel extends StatelessWidget {
       HomeWorkbenchTab.guide => '指引',
       _ => '',
     };
-  }
-}
-
-class _AssetSnapshotPanel extends StatelessWidget {
-  const _AssetSnapshotPanel();
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    const snapshot = AssetSnapshotModel.unavailable();
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(4, 4, 4, 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  '资产快照',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              OutlinedButton.icon(
-                onPressed: null,
-                icon: const Icon(Icons.refresh_rounded, size: 16),
-                label: const Text('刷新资产'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            snapshot.message ?? '资产采集接口尚未接入，当前保留界面入口。',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: scheme.primaryContainer.withValues(alpha: 0.28),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: scheme.primary.withValues(alpha: 0.16)),
-            ),
-            child: Column(
-              children: [
-                Icon(
-                  Icons.inventory_2_outlined,
-                  size: 40,
-                  color: scheme.primary,
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  '功能未就绪',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '待后端提供资产快照和刷新接口后启用。',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            '后续将支持金币、勾玉、体力、御魂及仓库资源快照。',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-          ),
-        ],
-      ),
-    );
   }
 }
 

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oasx/modules/home/controllers/dashboard_controller.dart';
-import 'package:oasx/modules/home/models/asset_snapshot_model.dart';
 import 'package:oasx/modules/home/models/config_model.dart';
 import 'package:oasx/modules/home/models/home_workbench_layout.dart';
+import 'package:oasx/modules/home/widgets/asset_snapshot_panel.dart';
 import 'package:oasx/modules/home/widgets/log_center_panel.dart';
 import 'package:oasx/modules/home/widgets/statistics_panel.dart';
 import 'package:oasx/modules/home/widgets/task_catalog_panel.dart';
@@ -202,7 +202,7 @@ class ActiveConfigPanel extends StatelessWidget {
       ),
       HomeWorkbenchTab.stats => const ScriptStatisticsPanel(),
       HomeWorkbenchTab.logs => LogCenterPanel(scriptName: script.name),
-      HomeWorkbenchTab.assets => const _AssetSnapshotInlinePanel(),
+      HomeWorkbenchTab.assets => AssetSnapshotPanel(scriptName: script.name),
       HomeWorkbenchTab.guide => const _GuideInlinePanel(),
     };
   }
@@ -216,39 +216,6 @@ class ActiveConfigPanel extends StatelessWidget {
       HomeWorkbenchTab.assets => '资产',
       HomeWorkbenchTab.guide => '指引',
     };
-  }
-}
-
-class _AssetSnapshotInlinePanel extends StatelessWidget {
-  const _AssetSnapshotInlinePanel();
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    const snapshot = AssetSnapshotModel.unavailable();
-    return Center(
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 460),
-        padding: const EdgeInsets.all(28),
-        decoration: BoxDecoration(
-          color: scheme.primaryContainer.withValues(alpha: 0.28),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.inventory_2_outlined, size: 42, color: scheme.primary),
-            const SizedBox(height: 12),
-            Text(snapshot.message ?? '资产快照接口尚未接入'),
-            const SizedBox(height: 8),
-            Text(
-              '右侧资产入口已保留，等待后端功能开发。',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 
