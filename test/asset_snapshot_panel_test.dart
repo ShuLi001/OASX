@@ -33,6 +33,8 @@ void main() {
     expect(find.text('物品库·资源'), findsOneWidget);
     expect(find.text('更新时间：2026-11-01 16:49:15'), findsOneWidget);
     expect(find.text('金币'), findsOneWidget);
+    expect(find.text('905万'), findsOneWidget);
+    expect(find.text('9050000'), findsNothing);
     expect(find.text('神秘的符咒'), findsOneWidget);
     expect(
       find.byKey(

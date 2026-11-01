@@ -295,6 +295,17 @@ class _AssetCard extends StatelessWidget {
   final double iconSize;
   final bool compact;
 
+  String get _quantityText {
+    final useWan =
+        entry.variableName == 'gold' ||
+        (entry.variableName == 'jade' && quantity > 10000);
+    if (!useWan) {
+      return quantity.toString();
+    }
+    final amount = (quantity / 10000).toStringAsFixed(2);
+    return '${amount.replaceFirst(RegExp(r'\.?0+$'), '')}万';
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -345,7 +356,7 @@ class _AssetCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      quantity.toString(),
+                      _quantityText,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
