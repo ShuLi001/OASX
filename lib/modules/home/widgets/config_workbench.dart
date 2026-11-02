@@ -42,11 +42,6 @@ class ConfigWorkbench extends StatelessWidget {
         onRefreshScriptsTap: onRefreshScriptsTap,
         onActivateScript: (scriptName) =>
             _activateScript(context, scriptName, layoutMode),
-        onTogglePower: (scriptName, enable) =>
-            controller.applySelectionPowerToggle(
-              sourceScript: scriptName,
-              enable: enable,
-            ),
         onRenameScript: (scriptName) => _renameScript(context, scriptName),
         onExportScript: _exportScript,
         onDeleteScript: (scriptName) => _deleteScript(context, scriptName),
@@ -74,10 +69,12 @@ class ConfigWorkbench extends StatelessWidget {
             ? () => _showScriptListPage(context)
             : null,
       ),
-      sidebar: Obx(() {
+      sidebarBuilder: (expanded, onToggleExpansion) => Obx(() {
         return WorkbenchSidebarPanel(
           controller: controller,
           scriptName: controller.activeScriptName.value,
+          expanded: expanded,
+          onToggleExpansion: onToggleExpansion,
         );
       }),
     );

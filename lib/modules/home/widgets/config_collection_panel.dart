@@ -27,7 +27,6 @@ class ConfigCollectionPanel extends StatefulWidget {
     required this.onAddScriptTap,
     required this.onRefreshScriptsTap,
     required this.onActivateScript,
-    required this.onTogglePower,
     required this.onRenameScript,
     required this.onExportScript,
     required this.onDeleteScript,
@@ -40,7 +39,6 @@ class ConfigCollectionPanel extends StatefulWidget {
   final VoidCallback onAddScriptTap;
   final VoidCallback onRefreshScriptsTap;
   final Future<void> Function(String scriptName) onActivateScript;
-  final Future<void> Function(String scriptName, bool enable) onTogglePower;
   final Future<void> Function(String scriptName) onRenameScript;
   final Future<void> Function(String scriptName) onExportScript;
   final Future<void> Function(String scriptName) onDeleteScript;
@@ -62,6 +60,7 @@ class _ConfigCollectionPanelState extends State<ConfigCollectionPanel> {
   final GlobalKey _listViewportKey = GlobalKey();
   Timer? _autoScrollTimer;
   double _autoScrollDirection = 0;
+  List<String>? _reorderNames;
 
   @override
   void initState() {
@@ -104,15 +103,44 @@ class _ConfigCollectionPanelState extends State<ConfigCollectionPanel> {
             onLeave: (_) => _stopAutoScroll(),
             builder: (context, _, __) => SizedBox.expand(
               key: _listViewportKey,
-              child: ListView.separated(
-                controller: _listScrollController,
-                itemCount: scripts.length,
-                separatorBuilder: (_, __) => Divider(
-                  height: 1,
-                  color: Theme.of(context).colorScheme.outlineVariant,
+              child: ReorderableListView.builder(
+                scrollController: _listScrollController,
+                buildDefaultDragHandles: false,
+                onReorderStart: (_) {
+                  _stopAutoScroll();
+                  _reorderNames = scripts.map((script) => script.name).toList();
+                },
+                // Keep compatibility with the project's Flutter 3.35 CI SDK.
+                // ignore: deprecated_member_use
+                onReorder: (oldIndex, newIndex) => unawaited(
+                  _reorderScripts(
+                    _reorderNames ??
+                        scripts.map((script) => script.name).toList(),
+                    oldIndex,
+                    newIndex > oldIndex ? newIndex - 1 : newIndex,
+                  ),
                 ),
-                itemBuilder: (context, index) =>
-                    _buildDropTargetTile(context, scripts[index]),
+                itemCount: scripts.length,
+                itemBuilder: (context, index) => Container(
+                  key: ValueKey('config-order-${scripts[index].name}'),
+                  decoration: BoxDecoration(
+                    border: index == scripts.length - 1
+                        ? null
+                        : Border(
+                            bottom: BorderSide(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.outlineVariant,
+                            ),
+                          ),
+                  ),
+                  child: _buildDropTargetTile(
+                    context,
+                    scripts[index],
+                    index,
+                    activeDragPayload == null && scripts.length > 1,
+                  ),
+                ),
               ),
             ),
           );
@@ -145,7 +173,25 @@ class _ConfigCollectionPanelState extends State<ConfigCollectionPanel> {
   }
 
   /// Wraps one config tile in the drop target used by drag-copy flows.
-  Widget _buildDropTargetTile(BuildContext context, ScriptModel script) {
+  Future<void> _reorderScripts(
+    List<String> names,
+    int oldIndex,
+    int newIndex,
+  ) async {
+    _reorderNames = null;
+    try {
+      await widget.controller.reorderVisibleScripts(names, oldIndex, newIndex);
+    } catch (_) {
+      if (mounted) Get.snackbar(I18n.error.tr, '配置顺序保存失败，请重试');
+    }
+  }
+
+  Widget _buildDropTargetTile(
+    BuildContext context,
+    ScriptModel script,
+    int index,
+    bool canReorder,
+  ) {
     return DragTarget<ConfigDragPayload>(
       onWillAcceptWithDetails: (details) {
         return _canAcceptPayload(script.name, details.data);
@@ -183,9 +229,30 @@ class _ConfigCollectionPanelState extends State<ConfigCollectionPanel> {
             controller: widget.controller,
             script: script,
             onTap: () => widget.onActivateScript(script.name),
-            onTogglePower: () => widget.onTogglePower(
-              script.name,
-              script.state.value != ScriptState.running,
+            reorderHandle: ReorderableDragStartListener(
+              key: ValueKey('config-reorder-handle-${script.name}'),
+              index: index,
+              enabled:
+                  canReorder &&
+                  !widget.controller.isDragCopyPendingFor(script.name),
+              child: Tooltip(
+                message: '按住拖动以排序',
+                child: MouseRegion(
+                  cursor: canReorder
+                      ? SystemMouseCursors.grab
+                      : SystemMouseCursors.basic,
+                  child: SizedBox.square(
+                    dimension: 32,
+                    child: Icon(
+                      Icons.drag_handle_rounded,
+                      size: 18,
+                      color: canReorder
+                          ? Theme.of(context).colorScheme.onSurfaceVariant
+                          : Theme.of(context).disabledColor,
+                    ),
+                  ),
+                ),
+              ),
             ),
             onRename: () => widget.onRenameScript(script.name),
             onExport: () => widget.onExportScript(script.name),

@@ -14,6 +14,8 @@ class WorkbenchSidebarPanel extends StatelessWidget {
     super.key,
     required this.controller,
     required this.scriptName,
+    this.expanded = false,
+    this.onToggleExpansion,
   });
 
   /// Dashboard controller that owns sidebar tab state.
@@ -21,6 +23,9 @@ class WorkbenchSidebarPanel extends StatelessWidget {
 
   /// Active script rendered by the sidebar.
   final String scriptName;
+
+  final bool expanded;
+  final VoidCallback? onToggleExpansion;
 
   @override
   Widget build(BuildContext context) {
@@ -37,20 +42,65 @@ class WorkbenchSidebarPanel extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: tabs
-                    .map(
-                      (tab) => ChoiceChip(
-                        label: Text(_tabLabel(tab)),
-                        showCheckmark: false,
-                        selected: currentTab == tab,
-                        onSelected: (_) =>
-                            controller.setActiveWorkbenchSidebarTabValue(tab),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: tabs
+                          .map(
+                            (tab) => ChoiceChip(
+                              label: Text(_tabLabel(tab)),
+                              showCheckmark: false,
+                              selected: currentTab == tab,
+                              onSelected: (_) => controller
+                                  .setActiveWorkbenchSidebarTabValue(tab),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                  if (onToggleExpansion != null) ...[
+                    const SizedBox(width: 8),
+                    IconButton(
+                      key: const ValueKey(
+                        'home-workbench-toggle-sidebar-expansion',
                       ),
-                    )
-                    .toList(),
+                      tooltip: expanded ? '收起并恢复布局' : '展开右侧栏',
+                      onPressed: onToggleExpansion,
+                      visualDensity: VisualDensity.compact,
+                      constraints: const BoxConstraints.tightFor(
+                        width: 32,
+                        height: 32,
+                      ),
+                      style: IconButton.styleFrom(
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        foregroundColor: expanded
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                        backgroundColor: expanded
+                            ? Theme.of(context).colorScheme.secondaryContainer
+                                  .withValues(alpha: .4)
+                            : Colors.transparent,
+                        hoverColor: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
+                      ),
+                      padding: EdgeInsets.zero,
+                      iconSize: 18,
+                      icon: Icon(
+                        expanded
+                            ? Icons.close_fullscreen_rounded
+                            : Icons.open_in_full_rounded,
+                      ),
+                    ),
+                  ],
+                ],
               ),
               const SizedBox(height: 12),
               Expanded(

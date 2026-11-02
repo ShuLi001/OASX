@@ -19,9 +19,9 @@ import 'package:oasx/modules/log/script_log_browser_controller.dart';
 part 'script_service_ws.dart';
 part 'script_service_auto.dart';
 part 'script_service_config.dart';
+part 'script_service_order.dart';
 
 class ScriptService extends GetxService {
-  // ignore: unused_field
   final _storage = GetStorage();
   final wsService = Get.find<WebSocketService>();
   final scriptModelMap = <String, ScriptModel>{}.obs;
@@ -88,10 +88,20 @@ class ScriptService extends GetxService {
   }
 
   void syncScriptOrder(Iterable<String> scripts) {
-    final normalized = scripts
+    final available = scripts
         .map((e) => e.trim())
         .where((e) => e.isNotEmpty)
+        .toSet()
         .toList();
+    final saved = _savedScriptOrder;
+    final availableSet = available.toSet();
+    final normalized = <String>{
+      ...saved.where(availableSet.contains),
+      ...available,
+    }.toList();
+    if (saved.isNotEmpty) {
+      unawaited(_storage.write(_scriptOrderStorageKey, normalized));
+    }
     scriptOrderList.value = normalized;
     for (final name in normalized) {
       if (!scriptModelMap.containsKey(name)) {

@@ -12,7 +12,7 @@ class ConfigCollectionTile extends StatelessWidget {
     required this.controller,
     required this.script,
     required this.onTap,
-    required this.onTogglePower,
+    this.reorderHandle,
     required this.onRename,
     required this.onExport,
     required this.onDelete,
@@ -23,7 +23,7 @@ class ConfigCollectionTile extends StatelessWidget {
   final HomeDashboardController controller;
   final ScriptModel script;
   final VoidCallback onTap;
-  final VoidCallback onTogglePower;
+  final Widget? reorderHandle;
   final VoidCallback onRename;
   final VoidCallback onExport;
   final VoidCallback onDelete;
@@ -87,9 +87,7 @@ class ConfigCollectionTile extends StatelessWidget {
                               script: script,
                               compact: isCompact,
                               accentColor: accentColor,
-                              powerButton: _PowerButton(
-                                onTogglePower: onTogglePower,
-                              ),
+                              reorderHandle: reorderHandle,
                               popupButton: _ActionMenuButton(
                                 onRename: onRename,
                                 onExport: onExport,
@@ -131,14 +129,14 @@ class _ScriptMeta extends StatelessWidget {
     required this.script,
     required this.compact,
     required this.accentColor,
-    required this.powerButton,
+    required this.reorderHandle,
     required this.popupButton,
   });
 
   final ScriptModel script;
   final bool compact;
   final Color accentColor;
-  final Widget powerButton;
+  final Widget? reorderHandle;
   final Widget popupButton;
 
   @override
@@ -163,7 +161,10 @@ class _ScriptMeta extends StatelessWidget {
                     crossAxisAlignment: WrapCrossAlignment.center,
                     spacing: 4,
                     runSpacing: 2,
-                    children: [powerButton, popupButton],
+                    children: [
+                      if (reorderHandle != null) reorderHandle!,
+                      popupButton,
+                    ],
                   ),
                   const SizedBox(height: 4),
                   ConfigCollectionScriptLabel(script: script, centered: true),
@@ -195,7 +196,7 @@ class _ScriptMeta extends StatelessWidget {
             ),
           ),
           const SizedBox(width: ConfigCollectionTile._actionSpacing),
-          powerButton,
+          if (reorderHandle != null) reorderHandle!,
           popupButton,
         ],
       ),
@@ -248,24 +249,6 @@ class _RegularAccentBar extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _PowerButton extends StatelessWidget {
-  const _PowerButton({required this.onTogglePower});
-
-  final VoidCallback onTogglePower;
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      onPressed: onTogglePower,
-      visualDensity: VisualDensity.compact,
-      constraints: const BoxConstraints.tightFor(width: 32, height: 32),
-      padding: EdgeInsets.zero,
-      iconSize: 23,
-      icon: const Icon(Icons.power_settings_new_rounded),
     );
   }
 }

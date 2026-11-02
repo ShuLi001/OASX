@@ -12,6 +12,7 @@ import 'package:oasx/config/constants.dart';
 import 'package:oasx/modules/common/models/storage_key.dart';
 import 'package:oasx/modules/home/models/script_statistics_models.dart';
 import 'package:oasx/modules/home/models/asset_snapshot_model.dart';
+import 'package:oasx/modules/home/models/asset_history_model.dart';
 import 'package:oasx/modules/log/log_browser_models.dart';
 import 'package:oasx/translation/i18n.dart';
 import 'package:oasx/translation/i18n_content.dart';
@@ -100,12 +101,14 @@ class ApiClient {
   }
 
   String address = _defaultAddress;
+  final addressRevision = 0.obs;
 
   bool get hasConfiguredBackendAddress => address.trim().isNotEmpty;
 
   void setAddress(String address) {
     final normalized = address.trim();
     this.address = normalized;
+    addressRevision.value++;
     NetOptions.instance.dio.options.baseUrl = normalized.isEmpty
         ? _defaultAddress
         : normalized;
@@ -117,6 +120,7 @@ class ApiClient {
 
   void clearAddress() {
     address = '';
+    addressRevision.value++;
     NetOptions.instance.dio.options.baseUrl = _defaultAddress;
   }
 
@@ -126,7 +130,7 @@ class ApiClient {
   }) async {
     try {
       final res = await apiFn();
-      return res.when(
+      return await res.when(
         success: (data) => ApiResult.fromResponse(data),
         failure: (msg, code) {
           onError?.call(msg, code);

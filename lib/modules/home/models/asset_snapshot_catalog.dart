@@ -55,11 +55,6 @@ class AssetSnapshotCatalog {
       iconAsset: 'assets/asset_icons/神秘的符咒_限时.png',
     ),
     AssetSnapshotEntry(
-      name: '神眷符咒_永恒',
-      variableName: 'eternal_divine_talisman',
-      iconAsset: 'assets/asset_icons/神眷符咒_永恒.png',
-    ),
-    AssetSnapshotEntry(
       name: '现世符咒',
       variableName: 'worldly_talisman',
       iconAsset: 'assets/asset_icons/现世符咒.png',

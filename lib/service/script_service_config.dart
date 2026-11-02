@@ -28,6 +28,7 @@ extension ScriptServiceConfigX on ScriptService {
     if (!ret) {
       return false;
     }
+    await _rememberRenamedScript(oldName, newName);
     await _disposeConfigRuntime(oldName);
     await refreshScriptsFromServer();
     await _connectKnownConfig(newName);

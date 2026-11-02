@@ -126,6 +126,34 @@ extension HomeDashboardWorkspaceX on HomeDashboardController {
     return orderedScripts.where(_matchesVisibleFilter).toList();
   }
 
+  /// Moves a visible config while preserving the slots occupied by hidden ones.
+  Future<void> reorderVisibleScripts(
+    List<String> visibleNames,
+    int oldIndex,
+    int newIndex,
+  ) async {
+    if (oldIndex < 0 ||
+        oldIndex >= visibleNames.length ||
+        newIndex < 0 ||
+        newIndex >= visibleNames.length) {
+      return;
+    }
+    final all = _scriptService.scriptOrderList.toList();
+    final visible = visibleNames.toSet();
+    if (visible.length != visibleNames.length ||
+        !all.toSet().containsAll(visible)) {
+      return;
+    }
+    final reordered = List<String>.of(visibleNames);
+    if (oldIndex == newIndex) return;
+    reordered.insert(newIndex, reordered.removeAt(oldIndex));
+    var index = 0;
+    await _scriptService.saveScriptOrder([
+      for (final name in all)
+        visible.contains(name) ? reordered[index++] : name,
+    ]);
+  }
+
   ScriptModel? get activeScriptModel {
     return _scriptService.findScriptModel(activeScriptName.value.trim());
   }
@@ -356,6 +384,7 @@ extension HomeDashboardWorkspaceX on HomeDashboardController {
     required String scriptName,
     required String taskName,
     required bool runNow,
+    bool applyLinkedScope = true,
   }) async {
     if (!runNow) {
       return syncTaskNextRun(scriptName: scriptName, taskName: taskName);
@@ -367,13 +396,41 @@ extension HomeDashboardWorkspaceX on HomeDashboardController {
       scriptName: scriptName,
       taskName: taskName,
       nextRun: targetDt,
+      applyLinkedScope: applyLinkedScope,
     );
+  }
+
+  /// Asset refresh joins the same scheduler queue as the overview lightning action.
+  Future<bool> enqueueAssetSnapshot(String scriptName) async {
+    final source = scriptName.trim();
+    if (source.isEmpty) return false;
+    final model = _scriptService.findScriptModel(source);
+    if (model?.state.value == ScriptState.running &&
+        model?.runningTask.value.taskName.value == 'AssetSnapshot') {
+      return true;
+    }
+    final enabled = await toggleTaskEnabled(
+      scriptName: source,
+      taskName: 'AssetSnapshot',
+      enable: true,
+      applyLinkedScope: false,
+    );
+    if (!enabled) return false;
+    final queued = await quickScheduleTask(
+      scriptName: source,
+      taskName: 'AssetSnapshot',
+      runNow: true,
+      applyLinkedScope: false,
+    );
+    if (queued) await _scriptService.startScript(source);
+    return queued;
   }
 
   Future<bool> updateTaskNextRun({
     required String scriptName,
     required String taskName,
     required String nextRun,
+    bool applyLinkedScope = true,
   }) async {
     final source = scriptName.trim();
     final normalizedTask = taskName.trim();
@@ -382,6 +439,13 @@ extension HomeDashboardWorkspaceX on HomeDashboardController {
       return false;
     }
     final argsController = Get.find<ArgsController>();
+    if (!applyLinkedScope) {
+      return argsController.updateScriptTaskNextRun(
+        source,
+        normalizedTask,
+        normalizedNextRun,
+      );
+    }
     return _applyTaskActionAcrossLinkedScope(
       sourceScript: source,
       taskName: normalizedTask,
