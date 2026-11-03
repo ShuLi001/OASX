@@ -282,7 +282,7 @@ class _AssetSnapshotPanelState extends State<AssetSnapshotPanel> {
           ),
         if (model.assets.isNotEmpty)
           Text(
-            '本次更新${model.assets.values.where((a) => a.source == 'observed').length}项',
+            '本次更新${[...AssetSnapshotCatalog.currencies, ...AssetSnapshotCatalog.resources].where((entry) => model.assets[entry.variableName]?.source == 'observed').length}项',
             style: const TextStyle(fontSize: 10),
           ),
         const SizedBox(height: 4),

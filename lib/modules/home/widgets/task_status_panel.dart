@@ -76,10 +76,10 @@ class _TaskStatusPanelState extends State<TaskStatusPanel> {
                     builder: (context, constraints) {
                       final scale =
                           MediaQuery.textScalerOf(context).scale(14) / 14;
-                      final columns = homeTaskColumns(
-                        constraints.maxWidth,
-                        scale,
-                      );
+                      final touch = homeUsesTouchTargets(context);
+                      final columns = touch
+                          ? homeTaskColumns(constraints.maxWidth, scale)
+                          : (constraints.maxWidth >= 420 ? 2 : 1);
                       return GridView.builder(
                         key: const PageStorageKey<String>(
                           'home-task-status-list',
@@ -94,7 +94,7 @@ class _TaskStatusPanelState extends State<TaskStatusPanel> {
                                     (columns - 1) * kHomeTaskCardGap) /
                                 columns,
                             scale,
-                            homeUsesTouchTargets(context),
+                            touch,
                           ),
                           crossAxisSpacing: kHomeTaskCardGap,
                           mainAxisSpacing: kHomeTaskCardGap,

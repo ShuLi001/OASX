@@ -652,18 +652,29 @@ class _CatalogSectionCard extends StatelessWidget {
             builder: (context, constraints) {
               final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
               final touch = homeUsesTouchTargets(context);
+              final double cardExtent =
+                  (touch ? 112 : kHomeCatalogTaskCardExtent) +
+                  (scale > 1 ? (scale - 1) * 40 : 0);
               return GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: section.tasks.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: homeTaskColumns(constraints.maxWidth, scale),
-                  mainAxisExtent:
-                      (touch ? 112 : kHomeCatalogTaskCardExtent) +
-                      (scale > 1 ? (scale - 1) * 40 : 0),
-                  crossAxisSpacing: kHomeTaskCardGap,
-                  mainAxisSpacing: kHomeTaskCardGap,
-                ),
+                gridDelegate: touch
+                    ? SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: homeTaskColumns(
+                          constraints.maxWidth,
+                          scale,
+                        ),
+                        mainAxisExtent: cardExtent,
+                        crossAxisSpacing: kHomeTaskCardGap,
+                        mainAxisSpacing: kHomeTaskCardGap,
+                      )
+                    : SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 390,
+                        mainAxisExtent: cardExtent,
+                        crossAxisSpacing: kHomeTaskCardGap,
+                        mainAxisSpacing: kHomeTaskCardGap,
+                      ),
                 itemBuilder: (context, index) {
                   final task = section.tasks[index];
                   return _CatalogTaskRow(

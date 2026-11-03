@@ -50,11 +50,6 @@ class AssetSnapshotCatalog {
       iconAsset: 'assets/asset_icons/神秘的符咒.png',
     ),
     AssetSnapshotEntry(
-      name: '神秘的符咒_限时',
-      variableName: 'limited_mystic_talisman',
-      iconAsset: 'assets/asset_icons/神秘的符咒_限时.png',
-    ),
-    AssetSnapshotEntry(
       name: '现世符咒',
       variableName: 'worldly_talisman',
       iconAsset: 'assets/asset_icons/现世符咒.png',
