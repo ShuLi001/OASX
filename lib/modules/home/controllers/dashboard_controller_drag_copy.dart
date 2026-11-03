@@ -3,7 +3,8 @@ part of 'dashboard_controller.dart';
 extension HomeDashboardDragCopyX on HomeDashboardController {
   /// Returns whether drag-copy is available in the current layout.
   bool get canUseDesktopDragCopy {
-    return workbenchLayoutMode.value != HomeWorkbenchLayoutMode.singlePane;
+    return !PlatformUtils.isMobile &&
+        workbenchLayoutMode.value != HomeWorkbenchLayoutMode.singlePane;
   }
 
   /// Returns whether the config is currently handling one drag-copy request.

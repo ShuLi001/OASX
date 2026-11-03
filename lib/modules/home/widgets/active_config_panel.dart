@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:oasx/modules/home/controllers/dashboard_controller.dart';
 import 'package:oasx/modules/home/models/config_model.dart';
 import 'package:oasx/modules/home/models/home_workbench_layout.dart';
+import 'package:oasx/modules/home/models/home_task_card_metrics.dart';
 import 'package:oasx/modules/home/widgets/asset_snapshot_panel.dart';
 import 'package:oasx/modules/home/widgets/log_center_panel.dart';
 import 'package:oasx/modules/home/widgets/statistics_panel.dart';
@@ -71,108 +72,153 @@ class ActiveConfigPanel extends StatelessWidget {
               .quickSchedulableTaskNamesFor(script)
               .isNotEmpty;
           final isBulkIdle = bulkMode == HomeBulkQuickScheduleMode.none;
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+          return LayoutBuilder(
+            builder: (context, viewport) {
+              final panel = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (onBackToScripts != null)
-                    IconButton(
-                      tooltip: I18n.scriptList.tr,
-                      onPressed: onBackToScripts,
-                      icon: const Icon(Icons.arrow_back_rounded),
-                    ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          script.name,
-                          style: Theme.of(context).textTheme.headlineSmall,
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final compact =
+                          constraints.maxWidth <
+                          600 *
+                              (MediaQuery.textScalerOf(context).scale(14) / 14);
+                      final identity = Row(
+                        children: [
+                          if (onBackToScripts != null)
+                            IconButton(
+                              tooltip: I18n.scriptList.tr,
+                              onPressed: onBackToScripts,
+                              icon: const Icon(Icons.arrow_back_rounded),
+                            ),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  script.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.headlineSmall,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  stateSubtitle,
+                                  maxLines: compact ? 2 : 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: isRunning
+                                            ? const Color(0xff0c9f70)
+                                            : Theme.of(
+                                                context,
+                                              ).colorScheme.onSurfaceVariant,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                      final actions = [
+                        _BulkQuickScheduleButton(
+                          icon: Icons.flash_on_rounded,
+                          tooltip: I18n.homeQuickRunAll.tr,
+                          loading: bulkMode == HomeBulkQuickScheduleMode.runNow,
+                          onPressed: isBulkIdle && hasBulkTasks
+                              ? onBulkQuickRun
+                              : null,
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          stateSubtitle,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: isRunning
-                                    ? const Color(0xff0c9f70)
-                                    : Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                              ),
+                        _BulkQuickScheduleButton(
+                          icon: Icons.schedule_rounded,
+                          tooltip: I18n.homeQuickWaitAll.tr,
+                          loading:
+                              bulkMode == HomeBulkQuickScheduleMode.waitNow,
+                          onPressed: isBulkIdle && hasBulkTasks
+                              ? onBulkQuickWait
+                              : null,
                         ),
-                      ],
-                    ),
+                        const SizedBox(width: 8),
+                        _PowerActionButton(
+                          label: I18n.run.tr,
+                          icon: Icons.play_arrow_rounded,
+                          active: !isRunning,
+                          color: const Color(0xff0c9f70),
+                          onPressed: !isRunning
+                              ? () => onTogglePower(script.name, true)
+                              : null,
+                        ),
+                        const SizedBox(width: 6),
+                        _PowerActionButton(
+                          label: I18n.stop.tr,
+                          icon: Icons.stop_rounded,
+                          active: isRunning,
+                          color: const Color(0xffd95768),
+                          onPressed: isRunning
+                              ? () => onTogglePower(script.name, false)
+                              : null,
+                        ),
+                        if (onExpandRightSidebar != null)
+                          const SizedBox(width: 8),
+                        if (onExpandRightSidebar != null)
+                          IconButton.filledTonal(
+                            key: const ValueKey<String>(
+                              'home-workbench-expand-right-sidebar',
+                            ),
+                            tooltip: I18n.homeRestoreSidebar.tr,
+                            onPressed: onExpandRightSidebar,
+                            icon: const Icon(
+                              Icons.keyboard_double_arrow_left_rounded,
+                            ),
+                          ),
+                      ];
+                      if (compact) {
+                        return Column(
+                          key: const ValueKey('home-compact-header'),
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            identity,
+                            const SizedBox(height: 8),
+                            Wrap(
+                              alignment: WrapAlignment.end,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              runSpacing: 4,
+                              children: actions,
+                            ),
+                          ],
+                        );
+                      }
+                      return Row(
+                        children: [
+                          Expanded(child: identity),
+                          ...actions,
+                        ],
+                      );
+                    },
                   ),
-                  _BulkQuickScheduleButton(
-                    icon: Icons.flash_on_rounded,
-                    tooltip: I18n.homeQuickRunAll.tr,
-                    loading: bulkMode == HomeBulkQuickScheduleMode.runNow,
-                    onPressed: isBulkIdle && hasBulkTasks
-                        ? onBulkQuickRun
-                        : null,
+                  const SizedBox(height: 12),
+                  _WorkbenchTabs(
+                    tabs: tabs,
+                    selected: currentTab,
+                    label: _tabLabel,
+                    onSelected: onChangeTab,
                   ),
-                  _BulkQuickScheduleButton(
-                    icon: Icons.schedule_rounded,
-                    tooltip: I18n.homeQuickWaitAll.tr,
-                    loading: bulkMode == HomeBulkQuickScheduleMode.waitNow,
-                    onPressed: isBulkIdle && hasBulkTasks
-                        ? onBulkQuickWait
-                        : null,
-                  ),
-                  const SizedBox(width: 8),
-                  _PowerActionButton(
-                    label: I18n.run.tr,
-                    icon: Icons.play_arrow_rounded,
-                    active: !isRunning,
-                    color: const Color(0xff0c9f70),
-                    onPressed: !isRunning
-                        ? () => onTogglePower(script.name, true)
-                        : null,
-                  ),
-                  const SizedBox(width: 6),
-                  _PowerActionButton(
-                    label: I18n.stop.tr,
-                    icon: Icons.stop_rounded,
-                    active: isRunning,
-                    color: const Color(0xffd95768),
-                    onPressed: isRunning
-                        ? () => onTogglePower(script.name, false)
-                        : null,
-                  ),
-                  if (onExpandRightSidebar != null) const SizedBox(width: 8),
-                  if (onExpandRightSidebar != null)
-                    IconButton.filledTonal(
-                      key: const ValueKey<String>(
-                        'home-workbench-expand-right-sidebar',
-                      ),
-                      tooltip: I18n.homeRestoreSidebar.tr,
-                      onPressed: onExpandRightSidebar,
-                      icon: const Icon(
-                        Icons.keyboard_double_arrow_left_rounded,
-                      ),
-                    ),
+                  const SizedBox(height: 12),
+                  Expanded(child: _buildTabContent(script, currentTab)),
                 ],
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: tabs
-                    .map(
-                      (tab) => ChoiceChip(
-                        label: Text(_tabLabel(tab)),
-                        showCheckmark: false,
-                        selected: currentTab == tab,
-                        onSelected: (_) => onChangeTab(tab),
-                      ),
-                    )
-                    .toList(),
-              ),
-              const SizedBox(height: 12),
-              Expanded(child: _buildTabContent(script, currentTab)),
-            ],
+              );
+              // Let the header scroll away in landscape or above the soft keyboard.
+              // The inner task list still receives a finite, usable viewport.
+              final minimumHeight =
+                  320 + MediaQuery.textScalerOf(context).scale(120);
+              if (viewport.maxHeight >= minimumHeight) return panel;
+              return SingleChildScrollView(
+                key: const ValueKey('home-short-viewport'),
+                child: SizedBox(height: minimumHeight, child: panel),
+              );
+            },
           );
         }),
       ),
@@ -217,6 +263,83 @@ class ActiveConfigPanel extends StatelessWidget {
       HomeWorkbenchTab.guide => '指引',
     };
   }
+}
+
+/// Keeps every tab reachable without consuming a second row on phones.
+class _WorkbenchTabs extends StatefulWidget {
+  const _WorkbenchTabs({
+    required this.tabs,
+    required this.selected,
+    required this.label,
+    required this.onSelected,
+  });
+
+  final List<HomeWorkbenchTab> tabs;
+  final HomeWorkbenchTab selected;
+  final String Function(HomeWorkbenchTab) label;
+  final ValueChanged<HomeWorkbenchTab> onSelected;
+
+  @override
+  State<_WorkbenchTabs> createState() => _WorkbenchTabsState();
+}
+
+class _WorkbenchTabsState extends State<_WorkbenchTabs> {
+  final _keys = {for (final tab in HomeWorkbenchTab.values) tab: GlobalKey()};
+
+  @override
+  void initState() {
+    super.initState();
+    _revealSelection();
+  }
+
+  @override
+  void didUpdateWidget(covariant _WorkbenchTabs oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selected != widget.selected) _revealSelection();
+  }
+
+  void _revealSelection() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final selectedContext = _keys[widget.selected]?.currentContext;
+      if (selectedContext != null) {
+        Scrollable.ensureVisible(selectedContext, alignment: 0.5);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final compact =
+          constraints.maxWidth <
+          600 * (MediaQuery.textScalerOf(context).scale(14) / 14);
+      final chips = widget.tabs
+          .map(
+            (tab) => Padding(
+              key: _keys[tab],
+              padding: const EdgeInsets.only(right: 8),
+              child: ChoiceChip(
+                label: Text(widget.label(tab)),
+                materialTapTargetSize: compact
+                    ? MaterialTapTargetSize.padded
+                    : null,
+                showCheckmark: false,
+                selected: widget.selected == tab,
+                onSelected: (_) => widget.onSelected(tab),
+              ),
+            ),
+          )
+          .toList();
+      return compact
+          ? SingleChildScrollView(
+              key: const ValueKey('home-scrollable-tabs'),
+              scrollDirection: Axis.horizontal,
+              child: Row(children: chips),
+            )
+          : Wrap(runSpacing: 8, children: chips);
+    },
+  );
 }
 
 class _GuideInlinePanel extends StatelessWidget {
@@ -289,7 +412,7 @@ class _PowerActionButton extends StatelessWidget {
               : Theme.of(context).colorScheme.outlineVariant,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-        minimumSize: const Size(0, 38),
+        minimumSize: Size(0, homeUsesTouchTargets(context) ? 48 : 38),
       ),
     );
   }

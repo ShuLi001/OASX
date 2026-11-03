@@ -74,7 +74,12 @@ class _TaskStatusPanelState extends State<TaskStatusPanel> {
                 ? Center(child: Text(_emptyMessage))
                 : LayoutBuilder(
                     builder: (context, constraints) {
-                      final columns = constraints.maxWidth >= 420 ? 2 : 1;
+                      final scale =
+                          MediaQuery.textScalerOf(context).scale(14) / 14;
+                      final columns = homeTaskColumns(
+                        constraints.maxWidth,
+                        scale,
+                      );
                       return GridView.builder(
                         key: const PageStorageKey<String>(
                           'home-task-status-list',
@@ -84,7 +89,13 @@ class _TaskStatusPanelState extends State<TaskStatusPanel> {
                         itemCount: visibleTasks.length,
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: columns,
-                          mainAxisExtent: kHomeOverviewTaskCardExtent,
+                          mainAxisExtent: homeOverviewCardExtent(
+                            (constraints.maxWidth -
+                                    (columns - 1) * kHomeTaskCardGap) /
+                                columns,
+                            scale,
+                            homeUsesTouchTargets(context),
+                          ),
                           crossAxisSpacing: kHomeTaskCardGap,
                           mainAxisSpacing: kHomeTaskCardGap,
                         ),

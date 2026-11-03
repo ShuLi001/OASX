@@ -6,6 +6,7 @@ import 'package:oasx/modules/args/index.dart';
 import 'package:oasx/modules/common/models/config_drag_payload.dart';
 import 'package:oasx/modules/common/widgets/drag_copy_feedback.dart';
 import 'package:oasx/modules/home/controllers/dashboard_controller.dart';
+import 'package:oasx/modules/home/models/home_task_card_metrics.dart';
 import 'package:oasx/modules/home/widgets/task_status_swipe_container.dart';
 import 'package:oasx/translation/i18n_content.dart';
 import 'package:oasx/utils/time_utils.dart';
@@ -64,7 +65,6 @@ class TaskStatusRow extends StatelessWidget {
   final bool dragEnabled;
   final bool swipeEnabled;
   final ConfigDragPayload? activeDragPayload;
-  static const double _actionExtent = 90;
 
   @override
   Widget build(BuildContext context) {
@@ -79,37 +79,58 @@ class TaskStatusRow extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: _borderColor(context)),
         ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              _TaskTypeIcon(type: task.type),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _TaskMeta(
-                  controller: controller,
-                  sourceScriptName: sourceScriptName,
-                  task: task,
-                  onSetNextRun: onSetNextRun,
-                  dragEnabled: dragEnabled,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+            final actionsBelow = homeOverviewActionsBelow(
+              constraints.maxWidth,
+              scale,
+              homeUsesTouchTargets(context),
+            );
+            final metadata = Row(
+              children: [
+                _TaskTypeIcon(type: task.type),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _TaskMeta(
+                    controller: controller,
+                    sourceScriptName: sourceScriptName,
+                    task: task,
+                    onSetNextRun: onSetNextRun,
+                    dragEnabled: dragEnabled,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              SizedBox(
-                width: _actionExtent,
-                child: _TaskActionBar(
-                  onQuickRun: !quickScheduleLocked && canQuickSchedule
-                      ? () => onQuickRun(task.name)
-                      : null,
-                  onQuickWait: !quickScheduleLocked && canQuickSchedule
-                      ? () => onQuickWait(task.name)
-                      : null,
-                  onEditTask: () => onEditTask(task.name),
-                ),
-              ),
-            ],
-          ),
+              ],
+            );
+            final actions = _TaskActionBar(
+              onQuickRun: !quickScheduleLocked && canQuickSchedule
+                  ? () => onQuickRun(task.name)
+                  : null,
+              onQuickWait: !quickScheduleLocked && canQuickSchedule
+                  ? () => onQuickWait(task.name)
+                  : null,
+              onEditTask: () => onEditTask(task.name),
+            );
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              child: actionsBelow
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(child: metadata),
+                        const SizedBox(height: 4),
+                        Align(alignment: Alignment.centerRight, child: actions),
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        Expanded(child: metadata),
+                        const SizedBox(width: 8),
+                        actions,
+                      ],
+                    ),
+            );
+          },
         ),
       ),
     );

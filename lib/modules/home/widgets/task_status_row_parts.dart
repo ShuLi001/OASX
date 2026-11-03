@@ -135,12 +135,17 @@ class _TaskActionIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final touch = homeUsesTouchTargets(context);
+    final extent = touch ? 48.0 : 30.0;
     return IconButton(
       tooltip: tooltip,
       padding: EdgeInsets.zero,
-      visualDensity: VisualDensity.compact,
-      constraints: const BoxConstraints.tightFor(width: 30, height: 30),
-      iconSize: 17,
+      visualDensity: touch ? VisualDensity.standard : VisualDensity.compact,
+      constraints: BoxConstraints.tightFor(width: extent, height: extent),
+      style: IconButton.styleFrom(
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      iconSize: touch ? 20 : 17,
       onPressed: onPressed,
       icon: Icon(icon),
     );

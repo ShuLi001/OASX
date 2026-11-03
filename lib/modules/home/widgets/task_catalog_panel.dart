@@ -505,10 +505,10 @@ class _CatalogTaskRow extends StatelessWidget {
                 Expanded(child: title),
                 if (supportsEnable)
                   Transform.scale(
-                    scale: 0.82,
+                    scale: homeUsesTouchTargets(context) ? 1 : 0.82,
                     alignment: Alignment.centerRight,
                     child: SizedBox(
-                      height: 26,
+                      height: homeUsesTouchTargets(context) ? 48 : 26,
                       child: loading
                           ? const SizedBox(
                               width: 18,
@@ -526,15 +526,18 @@ class _CatalogTaskRow extends StatelessWidget {
           ),
           Row(
             children: [
-              Text(
-                task.enabled ? (timeText.isEmpty ? '已启用' : timeText) : '未启用',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: task.enabled
-                      ? const Color(0xff0c9f70)
-                      : scheme.outline,
+              Expanded(
+                child: Text(
+                  task.enabled ? (timeText.isEmpty ? '已启用' : timeText) : '未启用',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: task.enabled
+                        ? const Color(0xff0c9f70)
+                        : scheme.outline,
+                  ),
                 ),
               ),
-              const Spacer(),
               _IconOnlyButton(
                 icon: Icons.flash_on_rounded,
                 tooltip: '立即排队',
@@ -645,32 +648,40 @@ class _CatalogSectionCard extends StatelessWidget {
         const SizedBox(height: 4),
         Padding(
           padding: const EdgeInsets.all(8),
-          child: GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: section.tasks.length,
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 390,
-              mainAxisExtent: kHomeCatalogTaskCardExtent,
-              crossAxisSpacing: kHomeTaskCardGap,
-              mainAxisSpacing: kHomeTaskCardGap,
-            ),
-            itemBuilder: (context, index) {
-              final task = section.tasks[index];
-              return _CatalogTaskRow(
-                controller: controller,
-                sourceScriptName: sourceScriptName,
-                task: task,
-                timeText: nextRunByTask[task.name] ?? '',
-                loading: togglingTasks.contains(task.name),
-                onToggleEnabled: (value) => onToggleEnabled(task, value),
-                onOpenTask: onOpenTask,
-                onQuickRun: onQuickRun,
-                onQuickWait: onQuickWait,
-                canQuickScheduleTask: canQuickScheduleTask,
-                quickScheduleLocked: quickScheduleLocked,
-                dragEnabled: dragEnabled,
-                activeDragPayload: activeDragPayload,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+              final touch = homeUsesTouchTargets(context);
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: section.tasks.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: homeTaskColumns(constraints.maxWidth, scale),
+                  mainAxisExtent:
+                      (touch ? 112 : kHomeCatalogTaskCardExtent) +
+                      (scale > 1 ? (scale - 1) * 40 : 0),
+                  crossAxisSpacing: kHomeTaskCardGap,
+                  mainAxisSpacing: kHomeTaskCardGap,
+                ),
+                itemBuilder: (context, index) {
+                  final task = section.tasks[index];
+                  return _CatalogTaskRow(
+                    controller: controller,
+                    sourceScriptName: sourceScriptName,
+                    task: task,
+                    timeText: nextRunByTask[task.name] ?? '',
+                    loading: togglingTasks.contains(task.name),
+                    onToggleEnabled: (value) => onToggleEnabled(task, value),
+                    onOpenTask: onOpenTask,
+                    onQuickRun: onQuickRun,
+                    onQuickWait: onQuickWait,
+                    canQuickScheduleTask: canQuickScheduleTask,
+                    quickScheduleLocked: quickScheduleLocked,
+                    dragEnabled: dragEnabled,
+                    activeDragPayload: activeDragPayload,
+                  );
+                },
               );
             },
           ),
@@ -697,7 +708,15 @@ class _IconOnlyButton extends StatelessWidget {
       tooltip: tooltip,
       padding: EdgeInsets.zero,
       visualDensity: VisualDensity.compact,
-      constraints: const BoxConstraints.tightFor(width: 32, height: 32),
+      constraints: BoxConstraints.tightFor(
+        width: homeUsesTouchTargets(context) ? 48 : 32,
+        height: homeUsesTouchTargets(context) ? 48 : 32,
+      ),
+      style: IconButton.styleFrom(
+        tapTargetSize: homeUsesTouchTargets(context)
+            ? MaterialTapTargetSize.padded
+            : MaterialTapTargetSize.shrinkWrap,
+      ),
       iconSize: 18,
       onPressed: onPressed,
       icon: Icon(icon),

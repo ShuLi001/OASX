@@ -71,7 +71,6 @@ class DateTimePickerBaseState extends State<DateTimePickerBase> {
         widget.hoverStyle ??
         TextStyle(color: Theme.of(context).primaryColor, fontSize: 16);
     final notHoverStyle = widget.notHoverStyle ?? const TextStyle(fontSize: 16);
-    final baseHeight = (hoverStyle.fontSize ?? 16) * 1.2;
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _isHover = true),
@@ -80,6 +79,8 @@ class DateTimePickerBaseState extends State<DateTimePickerBase> {
           Text(
                 widget.displayValue ?? widget.value,
                 style: _isHover ? hoverStyle : notHoverStyle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               )
               .scale(
                 all: _isHover ? 1.1 : 1.0,
@@ -87,7 +88,6 @@ class DateTimePickerBaseState extends State<DateTimePickerBase> {
                 animate: true,
               )
               .animate(const Duration(milliseconds: 120), Curves.easeOut)
-              .constrained(height: baseHeight)
               .gestures(onTap: () => showPicker(context, widget.value)),
     );
   }

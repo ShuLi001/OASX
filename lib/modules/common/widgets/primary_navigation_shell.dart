@@ -58,7 +58,7 @@ class _PrimaryNavigationShellState extends State<PrimaryNavigationShell> {
         );
         return Scaffold(
           appBar: buildPlatformAppBar(context, routePath: _routePath),
-          resizeToAvoidBottomInset: false,
+          resizeToAvoidBottomInset: true,
           body: showRail
               ? Row(
                   children: [
