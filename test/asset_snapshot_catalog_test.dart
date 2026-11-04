@@ -32,8 +32,12 @@ void main() {
     final mapping = File(
       'assets/asset_snapshot_variables.json',
     ).readAsStringSync();
-    expect(entries, hasLength(73));
-    expect(entries.map((entry) => entry.name).toSet(), hasLength(73));
+    expect(entries, hasLength(71));
+    expect(entries.map((entry) => entry.name).toSet(), hasLength(71));
+    expect(
+      entries.map((entry) => entry.variableName),
+      isNot(contains('limited_mystic_talisman')),
+    );
     for (final entry in entries) {
       expect(entry.variableName, isNotEmpty);
       expect(mapping, contains('"${entry.name}": "${entry.variableName}"'));
@@ -45,10 +49,8 @@ void main() {
       AssetSnapshotCatalog.currencies.map((entry) => entry.variableName),
       orderedEquals(['gold', 'stamina', 'jade', 'soul_jade']),
     );
-    // The six OAS QA screenshots omit these unowned or legacy variants.
+    // The OAS QA screenshots omit these unowned or legacy variants.
     const uncaptured = {
-      'eternal_divine_talisman',
-      'limited_mystic_talisman',
       'resentment_scroll',
       'greed_scroll',
       'large_star_candy',

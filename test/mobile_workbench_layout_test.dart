@@ -129,6 +129,37 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
   }
 
+  void mockTaskCatalog() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('dev.fluttercommunity.plus/connectivity'),
+          (_) async => 'wifi',
+        );
+    addTearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+            const MethodChannel('dev.fluttercommunity.plus/connectivity'),
+            null,
+          ),
+    );
+    ApiClient();
+    final interceptor = InterceptorsWrapper(
+      onRequest: (options, handler) => handler.resolve(
+        Response(
+          requestOptions: options,
+          data: {
+            'data': {
+              '日常任务': ['结界蹭卡', '悬赏封印', '花合战'],
+            },
+          },
+        ),
+      ),
+    );
+    NetOptions.instance.dio.interceptors.insert(0, interceptor);
+    addTearDown(() => NetOptions.instance.dio.interceptors.remove(interceptor));
+    dashboard.activeWorkbenchTab.value = HomeWorkbenchTab.tasks;
+  }
+
   for (final width in [320.0, 360.0, 412.0]) {
     for (final scale in [1.0, 1.5, 2.0]) {
       testWidgets(
@@ -269,6 +300,73 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  for (final paneWidth in [419.0, 420.0, 480.0, 600.0, 607.0]) {
+    for (final scale in [1.0, 1.5]) {
+      testWidgets(
+        'PC overview pane $paneWidth at ${scale}x retains desktop columns',
+        (tester) async {
+          // This theme has zero card margin; outer and inner padding each use 24px.
+          await mount(
+            tester,
+            size: Size(paneWidth + 48, 740),
+            scale: scale,
+            platform: TargetPlatform.windows,
+          );
+          final grid = find.byKey(
+            const PageStorageKey<String>('home-task-status-list'),
+          );
+          expect(tester.getSize(grid).width, closeTo(paneWidth, .01));
+          final rows = find.byType(TaskStatusRow);
+          final first = tester.getTopLeft(rows.at(0));
+          final second = tester.getTopLeft(rows.at(1));
+          if (paneWidth >= 420) {
+            expect(second.dy, first.dy);
+            expect(second.dx, greaterThan(first.dx));
+          } else {
+            expect(second.dy, greaterThan(first.dy));
+          }
+          final edit = find.descendant(
+            of: rows.first,
+            matching: find.byTooltip(I18n.homeOpenTaskParams.tr),
+          );
+          expect(tester.getSize(edit).width, lessThan(48));
+          await tester.tap(edit);
+          expect(actions, ['edit:结界蹭卡']);
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
+  }
+
+  for (final platform in [TargetPlatform.windows, TargetPlatform.android]) {
+    testWidgets('$platform task catalog retains its platform column rules', (
+      tester,
+    ) async {
+      mockTaskCatalog();
+      await mount(tester, size: const Size(1200, 740), platform: platform);
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 100)),
+      );
+      await tester.pumpAndSettle();
+      final grid = tester.widget<GridView>(find.byType(GridView).first);
+      if (platform == TargetPlatform.windows) {
+        final delegate =
+            grid.gridDelegate as SliverGridDelegateWithMaxCrossAxisExtent;
+        expect(delegate.maxCrossAxisExtent, 390);
+        final buttons = find.byTooltip(I18n.homeOpenTaskParams.tr);
+        expect(
+          tester.getTopLeft(buttons.at(0)).dy,
+          tester.getTopLeft(buttons.at(2)).dy,
+        );
+      } else {
+        final delegate =
+            grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
+        expect(delegate.crossAxisCount, 2);
+      }
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets(
     'short viewport above Android keyboard can scroll to task actions',
     (tester) async {
@@ -287,38 +385,7 @@ void main() {
   testWidgets(
     'Android task catalog keeps cards readable at narrow and large fonts',
     (tester) async {
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(
-            const MethodChannel('dev.fluttercommunity.plus/connectivity'),
-            (_) async => 'wifi',
-          );
-      addTearDown(
-        () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(
-              const MethodChannel('dev.fluttercommunity.plus/connectivity'),
-              null,
-            ),
-      );
-      ApiClient();
-      final interceptor = InterceptorsWrapper(
-        onRequest: (options, handler) {
-          handler.resolve(
-            Response(
-              requestOptions: options,
-              data: {
-                'data': {
-                  '日常任务': ['结界蹭卡', '悬赏封印', '花合战'],
-                },
-              },
-            ),
-          );
-        },
-      );
-      NetOptions.instance.dio.interceptors.insert(0, interceptor);
-      addTearDown(
-        () => NetOptions.instance.dio.interceptors.remove(interceptor),
-      );
-      dashboard.activeWorkbenchTab.value = HomeWorkbenchTab.tasks;
+      mockTaskCatalog();
       await mount(tester, size: const Size(320, 740), scale: 2);
       await tester.runAsync(() async {
         await Future<void>.delayed(const Duration(milliseconds: 100));

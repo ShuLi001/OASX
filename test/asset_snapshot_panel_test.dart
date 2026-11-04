@@ -19,7 +19,18 @@ void main() {
             model: AssetSnapshotModel.fromJson({
               'status': 'ready',
               'updatedAt': '2026-11-01T16:49:15',
-              'values': {'gold': 9050000},
+              'values': {
+                'gold': 9050000,
+                'jade': 12345,
+                'limited_mystic_talisman': 99,
+              },
+              'assets': {
+                'gold': {'quantity': 9050000, 'source': 'observed'},
+                'limited_mystic_talisman': {
+                  'quantity': 99,
+                  'source': 'observed',
+                },
+              },
             }),
             onRefresh: () => refreshed = true,
           ),
@@ -35,7 +46,15 @@ void main() {
     expect(find.text('金币'), findsOneWidget);
     expect(find.text('905万'), findsOneWidget);
     expect(find.text('9050000'), findsNothing);
+    expect(find.text('12345'), findsOneWidget);
+    expect(find.text('1.23万'), findsNothing);
     expect(find.text('神秘的符咒'), findsOneWidget);
+    expect(find.text('神秘的符咒_限时'), findsNothing);
+    expect(find.text('本次更新1项'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('asset-card-limited_mystic_talisman')),
+      findsNothing,
+    );
     expect(
       find.byKey(
         const ValueKey<String>('asset-snapshot-currencies-two-column'),
@@ -59,7 +78,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
-      MaterialApp(
+      const MaterialApp(
         home: Scaffold(
           body: AssetSnapshotPanel(
             compact: true,
@@ -70,7 +89,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('资产采集接口尚未接入，当前保留界面入口。'), findsOneWidget);
+    expect(find.text('暂无资产快照，点击刷新资产执行一次采集。'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
